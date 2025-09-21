@@ -1,14 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ManagerDashboard from "@/components/ManagerDashboard";
 import AttendantPanel from "@/components/AttendantPanel";
+import { UserMenu } from "@/components/UserMenu";
+import { useAuth } from "@/hooks/useAuth";
 import { Users, MessageCircle, Clock, TrendingUp } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("manager");
+  const { profile } = useAuth();
+
+  // Set default tab based on user role
+  useEffect(() => {
+    if (profile?.role === 'attendant') {
+      setActiveTab("attendant");
+    } else if (profile?.role === 'manager') {
+      setActiveTab("manager");
+    }
+  }, [profile]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -25,10 +37,13 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Sistema Omnichannel para Clínicas</p>
               </div>
             </div>
-            <Badge variant="secondary" className="gap-2">
-              <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-              Sistema Online
-            </Badge>
+            <div className="flex items-center gap-4">
+              <Badge variant="secondary" className="gap-2">
+                <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+                Sistema Online
+              </Badge>
+              <UserMenu />
+            </div>
           </div>
         </div>
       </header>
@@ -103,14 +118,20 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="manager">Visão Gerente</TabsTrigger>
-                <TabsTrigger value="attendant">Visão Atendente</TabsTrigger>
+              <TabsList className={`grid w-full ${profile?.role === 'attendant' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                {profile?.role === 'manager' && (
+                  <TabsTrigger value="manager">Visão Gerente</TabsTrigger>
+                )}
+                <TabsTrigger value="attendant">
+                  {profile?.role === 'attendant' ? 'Painel de Atendimento' : 'Visão Atendente'}
+                </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="manager" className="mt-6">
-                <ManagerDashboard />
-              </TabsContent>
+              {profile?.role === 'manager' && (
+                <TabsContent value="manager" className="mt-6">
+                  <ManagerDashboard />
+                </TabsContent>
+              )}
               
               <TabsContent value="attendant" className="mt-6">
                 <AttendantPanel />
